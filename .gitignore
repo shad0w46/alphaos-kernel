@@ -1,0 +1,52 @@
+# Kernel build output
+*.o
+*.ko
+*.a
+*.cmd
+*.d
+*.dtb
+*.dtbo
+*.symvers
+*.order
+*.mod
+*.mod.c
+
+# Kernel generated files
+/System.map
+/vmlinux
+/vmlinux.*
+/bzImage
+/arch/*/boot/bzImage
+/arch/*/boot/compressed/
+/include/config/
+/include/generated/
+/scripts/mod/
+/scripts/basic/
+/scripts/dtc/
+/tools/objtool/
+/tools/bpf/resolve_btfids/
+/.tmp_versions/
+
+# Kernel configuration backups
+.config.old
+.config.backup
+defconfig
+
+# Build directories
+build/
+*.deb
+*.changes
+*.buildinfo
+
+# IDE/editor
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+
+# Temporary files
+*.tmp
+*.swp
+*~
