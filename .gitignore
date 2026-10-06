@@ -1,6 +1,38 @@
-# Kernel build output
+# ==============================================================================
+# AlphaOS Kernel .gitignore
+# ==============================================================================
+
+# Compiled Debian Packages and packaging metadata
+*.deb
+*.ddeb
+*.udeb
+*.changes
+*.buildinfo
+linux-upstream_*
+
+# Kernel and boot binary artifacts (large binaries)
+vmlinuz*
+initrd.img*
+System.map*
+*.iso
+*.img
+*.qcow2
+
+# Cryptographic Private Keys and sensitive certificates
+# (Public DER certificate can be tracked, but NEVER commit private keys)
+certs/*.priv
+certs/*.key
+certs/*.pem
+certs/*.p12
+certs/*.pfx
+*.priv
+*.key
+
+# Intermediate build objects
 *.o
 *.ko
+*.ko.xz
+*.ko.zst
 *.a
 *.cmd
 *.d
@@ -10,9 +42,9 @@
 *.order
 *.mod
 *.mod.c
+*.mod.o
 
-# Kernel generated files
-/System.map
+# Kernel tree build output & temporary files
 /vmlinux
 /vmlinux.*
 /bzImage
@@ -27,26 +59,27 @@
 /tools/bpf/resolve_btfids/
 /.tmp_versions/
 
-# Kernel configuration backups
+# Configuration backups and temporary files
+*.backup
+*.old
 .config.old
 .config.backup
 defconfig
 
 # Build directories
 build/
-*.deb
-*.changes
-*.buildinfo
+debian/
 
-# IDE/editor
+# Editor and IDE configs
 .vscode/
 .idea/
+*.swp
+*.tmp
+*~
 
-# Python
+# Python cache
 __pycache__/
 *.pyc
 
-# Temporary files
-*.tmp
-*.swp
-*~
+# Logs
+*.log

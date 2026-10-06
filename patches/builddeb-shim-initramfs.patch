@@ -1,0 +1,50 @@
+diff --git a/scripts/package/builddeb b/scripts/package/builddeb
+index ba1defc61652..bb62fa48688d 100755
+--- a/scripts/package/builddeb
++++ b/scripts/package/builddeb
+@@ -65,6 +65,45 @@ install_linux_image () {
+ 	esac
+ 	cp "$(${MAKE} -s -f ${srctree}/Makefile image_name)" "${pdir}/${installed_image_path}"
+ 
++	# Sign the kernel binary with the shim / MOK key if available
++	shim_key="${srctree}/certs/alphaos-shim.priv"
++	shim_cert="${srctree}/certs/alphaos-shim.pem"
++	sbsign_bin="$HOME/.local/usr/bin/sbsign"
++	[ -x "$sbsign_bin" ] || sbsign_bin="sbsign"
++	if [ -f "$shim_key" ] && [ -f "$shim_cert" ] && command -v "$sbsign_bin" >/dev/null 2>&1; then
++		echo "Signing kernel with AlphaOS Shim/MOK key..."
++		"$sbsign_bin" --key "$shim_key" --cert "$shim_cert" --output "${pdir}/${installed_image_path}.signed" "${pdir}/${installed_image_path}"
++		mv "${pdir}/${installed_image_path}.signed" "${pdir}/${installed_image_path}"
++		if [ -f "${srctree}/certs/alphaos-shim.der" ]; then
++			cp "${srctree}/certs/alphaos-shim.der" "${pdir}/boot/alphaos-shim.der"
++		fi
++	fi
++
++	# Generate initramfs and bundle it directly into the deb package
++	if [ "${ARCH}" != um ] && is_enabled CONFIG_BLK_DEV_INITRD; then
++		echo "Generating initramfs for ${KERNELRELEASE}..."
++		pdir_abs="$(readlink -f "${pdir}")"
++		tmpconf=$(mktemp -d)
++		cp -r /etc/initramfs-tools/* "$tmpconf"/ 2>/dev/null || true
++		rm -f "$tmpconf"/conf.d/calamares-safe-initramfs.conf
++		unshare -rm fakeroot bash -c "
++			mount -t tmpfs none /lib/modules
++			mkdir -p '/lib/modules/${KERNELRELEASE}'
++			mount --bind '${pdir_abs}/lib/modules/${KERNELRELEASE}' '/lib/modules/${KERNELRELEASE}'
++			PATH=\"/usr/sbin:/sbin:\$PATH\" mkinitramfs -d '$tmpconf' -o '${pdir_abs}/boot/initrd.img-${KERNELRELEASE}' '${KERNELRELEASE}'
++		" || true
++		rm -rf "$tmpconf"
++		if [ -s "${pdir}/boot/initrd.img-${KERNELRELEASE}" ]; then
++			echo "Successfully bundled initramfs: ${pdir}/boot/initrd.img-${KERNELRELEASE}"
++			cp "${pdir}/boot/initrd.img-${KERNELRELEASE}" "${srctree}/../initrd.img-${KERNELRELEASE}"
++		else
++			echo "Warning: mkinitramfs did not create ${pdir}/boot/initrd.img-${KERNELRELEASE}"
++		fi
++	fi
++
++	# Also copy the signed kernel binary to the project root
++	cp "${pdir}/${installed_image_path}" "${srctree}/../$(basename "${installed_image_path}")"
++
+ 	if [ "${ARCH}" != um ]; then
+ 		install_maint_scripts "${pdir}"
+ 	fi
